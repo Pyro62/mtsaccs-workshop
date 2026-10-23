@@ -39,8 +39,7 @@ git config --global user.email "you@example.com"
    ```bash
    git push -u origin cell-yourname
    ```
-   A GitHub sign-in window may pop up. That's expected. If the terminal asks for a
-   password instead, stop and raise your hand.
+   A GitHub sign-in window may pop up. That's expected.
 6. On GitHub, click **Compare & pull request**. Make sure the **base repository** is
    the original repo, not your fork. Then click **Create pull request**.
 7. When your PR is merged, refresh the live grid (it can take a minute) and find your cell.
@@ -81,5 +80,5 @@ Everyone edits the same line in `favorites.md`.
 ## Rules
 
 - Only `.txt`, `.png`, and `.jpg` files in `cells/`.
-- Keep content friendly and appropriate for a club event.
-- Stuck? Raise your hand.
+- Exercise common sense when uploading.
+- Stuck? Ask for help.
