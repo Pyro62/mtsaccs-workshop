@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim a Cell</title>
+<style>
+  :root { --bg:#2e3440; --panel:#252a34; --line:#4c566a; --text:#eceff4; --yellow:#ffd75e; --green:#8ee06b; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--text);
+         font-family:"Source Code Pro",ui-monospace,Menlo,Consolas,monospace; }
+  h1 { margin:0 0 4px; color:var(--yellow); font-size:2rem; }
+  p.sub { margin:0 0 20px; color:#b8c0d0; }
+  #grid { display:grid; gap:8px; grid-template-columns:repeat(var(--cols,5),1fr); }
+  .cell { min-height:120px; padding:10px; background:var(--panel); border:1px solid var(--line);
+          display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; }
+  .cell .body { overflow-wrap:anywhere; font-size:.95rem; white-space:pre-wrap; }
+  .cell img { width:100%; max-height:150px; object-fit:contain; }
+  .cell .who { margin-top:8px; font-size:.75rem; color:var(--green); }
+  .cell.empty { border-style:dashed; color:var(--line); align-items:center; justify-content:center; }
+  #msg { color:var(--yellow); margin-top:16px; }
+  @media (max-width:700px){ #grid { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<h1>Claim a Cell</h1>
+<p class="sub">Every file in <code>cells/</code> becomes one square. Add yours with a pull request.</p>
+<div id="grid"></div>
+<p id="msg"></p>
+
+<script>
+// config
+const COLS = 5;            // grid width
+const ROWS = 4;            // grid height (empty slots are shown until filled)
+const OWNER = "Pyro62";          
+const REPO  = "mtsaccs-workshop";          // e.g. "git-grid"
+const IMG = /\.(png|jpe?g|gif|webp)$/i, TXT = /\.txt$/i;
+const grid = document.getElementById("grid"), msg = document.getElementById("msg");
+grid.style.setProperty("--cols", COLS);
+
+function repoInfo() {
+  if (OWNER && REPO) return { owner: OWNER, repo: REPO };
+  const owner = location.hostname.split(".")[0];
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  return { owner, repo };
+}
+
+function makeCell(name, bodyEl) {
+  const c = document.createElement("div"); c.className = "cell";
+  const b = document.createElement("div"); b.className = "body"; b.appendChild(bodyEl);
+  const w = document.createElement("div"); w.className = "who"; w.textContent = name.replace(/\.[^.]+$/, "");
+  c.append(b, w); return c;
+}
+
+async function load() {
+  const { owner, repo } = repoInfo();
+  let files;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/cells`);
+    if (r.status === 403) throw new Error("GitHub rate limit hit. Wait a minute and refresh.");
+    if (!r.ok) throw new Error("Could not list cells/. Check OWNER and REPO in index.html.");
+    files = (await r.json()).filter(f => f.type === "file" && (IMG.test(f.name) || TXT.test(f.name)))
+                            .sort((a, b) => a.name.localeCompare(b.name));
+  } catch (e) { msg.textContent = e.message; return; }
+
+  for (const f of files) {
+    const el = document.createElement(IMG.test(f.name) ? "img" : "span");
+    if (el.tagName === "IMG") { el.src = "cells/" + encodeURIComponent(f.name); el.alt = f.name; }
+    else {
+      el.textContent = "...";
+      fetch("cells/" + encodeURIComponent(f.name)).then(r => r.text())
+        .then(t => { el.textContent = t.slice(0, 200); }).catch(() => { el.textContent = "(unreadable)"; });
+    }
+    grid.appendChild(makeCell(f.name, el));
+  }
+  for (let i = files.length; i < COLS * ROWS; i++) {
+    const e = document.createElement("div"); e.className = "cell empty"; e.textContent = "open"; grid.appendChild(e);
+  }
+}
+load();
+</script>
+</body>
+</html>
