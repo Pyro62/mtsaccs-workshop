@@ -1,3 +1,3 @@
 # Favorites
 
-Favorite programming language: ___
+Favorite programming language: javascript
